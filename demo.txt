@@ -1,0 +1,132 @@
+#Word Count:
+
+
+WDriver:
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.fs.Path;
+
+public class WDriver {
+
+    public static void main(String[] args)
+            throws IllegalArgumentException, IOException, ClassNotFoundException, InterruptedException {
+
+        Configuration c = new Configuration();
+
+        Job job = new Job(c, "WordCount");
+
+        job.setJarByClass(WDriver.class);
+
+        job.setMapperClass(WMapper.class);
+        job.setReducerClass(WReducer.class);
+
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+
+
+WMapper:
+
+import java.io.IOException;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+public class WMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+
+    @Override
+    public void map(LongWritable key, Text value, Context con)
+            throws IOException, InterruptedException {
+
+        String[] words = value.toString().split(",");
+
+        for (String word : words) {
+            con.write(new Text(word), new IntWritable(1));
+        }
+    }
+}
+
+
+WReducer:
+import java.io.IOException;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+public class WReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+    private IntWritable result = new IntWritable();
+
+    @Override
+    protected void reduce(Text key, Iterable<IntWritable> values, Context context)
+            throws IOException, InterruptedException {
+
+        int sum = 0;
+
+        for (IntWritable val : values) {
+            sum += val.get();
+        }
+
+        result.set(sum);
+
+        context.write(key, result);
+    }
+}
+
+
+
+
+
+
+
+
+1-> new java project> execution environment-1.8>finish
+2) create class files-> WDriver,WMapper,WReducer
+3) Jar file-> Build path->config build path->libraries->add external libraries
+usr/local/hadoop/share/hadoop
+	1. /map reduce (add all file)
+	2. /common (add all jar files)
+	3. /common/lib (c+A)
+		Apply and close.
+4)create jar file->export->jar file->finish
+go to the path where jar file is created
+
+5) create an input file
+touch input.txt
+nano input.txt
+atharva,atharva,harshad,yash
+c+o enter c+x
+
+start-dfs.sh | stop-dfs.sh
+start-yarn.sh | stop-yarn.sh
+
+hdfs dfs -mkdir /input/
+hdfs dfs -put /input/
+
+Command to run:
+hadoop jar <jarfilename>.jar WDriver(Driver class) /input/input.txt /output
+
+
+
+
+
+
+
+
+
+
+
